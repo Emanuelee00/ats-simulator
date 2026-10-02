@@ -65,3 +65,26 @@ def test_score_resume_table_detected():
     result = score_resume(_full_resume(has_tables=True))
     assert result.score == 80
     assert any("tabella" in issue.lower() for issue in result.issues)
+
+
+def test_score_resume_breakdown_sums_to_score_without_low_text_cap():
+    result = score_resume(_full_resume(multi_column=True, has_tables=True))
+    b = result.breakdown
+    assert b.contact_points + b.sections_points + b.layout_penalty + b.table_penalty == result.score
+
+
+def test_score_resume_breakdown_reflects_clamped_penalty():
+    # An empty resume (score 0) hitting a multi-column penalty: the penalty
+    # can't push the score below 0, so the breakdown must show the real
+    # applied delta (0), not the flat constant (-15) that didn't fully apply.
+    empty_multicolumn = ParsedResume(
+        contact=ContactInfo(), sections=[], multi_column_layout=True
+    )
+    result = score_resume(empty_multicolumn)
+    assert result.score == 0
+    assert result.breakdown.layout_penalty == 0
+
+
+def test_score_resume_breakdown_flags_low_text_cap():
+    result = score_resume(_full_resume(low_text=True))
+    assert result.breakdown.low_text_cap_applied is True

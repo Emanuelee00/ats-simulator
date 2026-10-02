@@ -1,27 +1,35 @@
 from ats_simulator.parsing.models import ParsedResume
 
-from .models import ATSScoreResult
+from .models import ATSScoreResult, ScoreBreakdown
 from .penalties import apply_layout_penalty, apply_low_text_penalty, apply_table_penalty
+
+
+def _contact_points(parsed: ParsedResume) -> int:
+    points = 0
+    if parsed.contact.email:
+        points += 15
+    if parsed.contact.phone:
+        points += 10
+    if parsed.contact.linkedin or parsed.contact.github:
+        points += 10
+    return points
+
+
+def _sections_points(parsed: ParsedResume) -> int:
+    section_names = {s.name for s in parsed.sections}
+    points = 0
+    if "experience" in section_names:
+        points += 25
+    if "education" in section_names:
+        points += 20
+    if "skills" in section_names:
+        points += 20
+    return points
 
 
 def score_from_parsed(parsed: ParsedResume) -> int:
     """Base score (0-100) from contact completeness and standard sections found."""
-    score = 0
-    if parsed.contact.email:
-        score += 15
-    if parsed.contact.phone:
-        score += 10
-    if parsed.contact.linkedin or parsed.contact.github:
-        score += 10
-
-    section_names = {s.name for s in parsed.sections}
-    if "experience" in section_names:
-        score += 25
-    if "education" in section_names:
-        score += 20
-    if "skills" in section_names:
-        score += 20
-    return score
+    return _contact_points(parsed) + _sections_points(parsed)
 
 
 def build_issues(parsed: ParsedResume) -> list[str]:
@@ -66,9 +74,32 @@ def build_issues(parsed: ParsedResume) -> list[str]:
 
 
 def score_resume(parsed: ParsedResume) -> ATSScoreResult:
-    """Compute the final ATS-readability score and issue list for a resume."""
-    score = score_from_parsed(parsed)
+    """Compute the final ATS-readability score, transparent breakdown and issues.
+
+    The breakdown records the actual delta each penalty applied (not a flat
+    constant) so it stays honest when a penalty gets clamped at the score
+    floor — e.g. a "-15" layout penalty that only reduced the score by 4
+    points because it was already near zero shows up as -4, not -15.
+    """
+    contact_points = _contact_points(parsed)
+    sections_points = _sections_points(parsed)
+    score = contact_points + sections_points
+
+    before = score
     score = apply_layout_penalty(score, parsed.multi_column_layout)
+    layout_penalty = score - before
+
+    before = score
     score = apply_table_penalty(score, parsed.has_tables)
+    table_penalty = score - before
+
     score = apply_low_text_penalty(score, parsed.low_text_content)
-    return ATSScoreResult(score=score, issues=build_issues(parsed))
+
+    breakdown = ScoreBreakdown(
+        contact_points=contact_points,
+        sections_points=sections_points,
+        layout_penalty=layout_penalty,
+        table_penalty=table_penalty,
+        low_text_cap_applied=parsed.low_text_content,
+    )
+    return ATSScoreResult(score=score, issues=build_issues(parsed), breakdown=breakdown)

@@ -17,6 +17,9 @@ def _format_report(parsed: ParsedResume, result: ATSScoreResult) -> str:
         f"Skills normalizzate: {', '.join(parsed.skills) or '-'}",
         "",
         f"ATS Score: {result.score}/100",
+        f"  Contatti: +{result.breakdown.contact_points}  Sezioni: +{result.breakdown.sections_points}"
+        f"  Layout: {result.breakdown.layout_penalty}  Tabelle: {result.breakdown.table_penalty}"
+        + ("  [punteggio limitato: testo scarso]" if result.breakdown.low_text_cap_applied else ""),
     ]
     if result.issues:
         lines.append("Problemi rilevati:")
