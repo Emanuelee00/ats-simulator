@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from .ai_backend import EntityExtractor, SectionClassifier
 from .candidate_name import extract_candidate_name
 from .contact_fields import extract_contact_fields
 from .education_taxonomy import normalize_education_level
@@ -11,7 +12,7 @@ from .extract_text import extract_text, is_text_sparse
 from .layout import has_multi_column_layout
 from .llm_extractor import create_default_extractor
 from .models import ContactInfo, ParsedResume, ResumeSection
-from .sections import split_into_sections
+from .sections import looks_like_heading_line, split_into_sections
 from .skills_taxonomy import normalize_skills, split_raw_skills
 from .tables import has_pdf_tables
 
@@ -27,20 +28,32 @@ def _extract_experience_dates(experience_text: str) -> list:
     return [r for r in parsed if r is not None]
 
 
-def parse_resume(path: Path) -> ParsedResume:
+def parse_resume(
+    path: Path,
+    classifier: SectionClassifier | None = None,
+    extractor: EntityExtractor | None = None,
+) -> ParsedResume:
     """Parse a CV file end-to-end: extract text, contacts, sections and skills.
 
     Section headings and employment dates/candidate name get an AI-assisted
-    second pass (OpenAI embeddings/LLM, see ai_backend.py) when an API key
-    is configured; otherwise this runs entirely on the regex/heuristic
+    second pass (SectionClassifier/EntityExtractor, see ai_backend.py) when
+    one is configured; otherwise this runs entirely on the regex/heuristic
     tier, unchanged from before Fase 19-23.
+
+    classifier/extractor default to the module-level OpenAI-backed
+    singletons (None if no OPENAI_API_KEY is set); pass an explicit instance
+    to use a different backend (e.g. a caller's own LLM gateway) without
+    touching this pipeline.
     """
+    classifier = classifier if classifier is not None else _classifier
+    extractor = extractor if extractor is not None else _extractor
+
     text = extract_text(path)
     contact = ContactInfo(**extract_contact_fields(text))
-    sections = split_into_sections(text, classifier=_classifier)
+    sections = split_into_sections(text, classifier=classifier)
     skills = normalize_skills(split_raw_skills(sections.get("skills", "")))
 
-    llm_entities = _extractor.extract(text) if _extractor else None
+    llm_entities = extractor.extract(text) if extractor else None
     date_ranges = (llm_entities.date_ranges if llm_entities else []) or _extract_experience_dates(
         sections.get("experience", "")
     )
@@ -66,4 +79,12 @@ def parse_resume(path: Path) -> ParsedResume:
     )
 
 
-__all__ = ["parse_resume", "ParsedResume", "ContactInfo", "ResumeSection"]
+__all__ = [
+    "parse_resume",
+    "ParsedResume",
+    "ContactInfo",
+    "ResumeSection",
+    "looks_like_heading_line",
+    "SectionClassifier",
+    "EntityExtractor",
+]
