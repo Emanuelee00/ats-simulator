@@ -4,13 +4,11 @@ from pathlib import Path
 from docx import Document
 
 
-def _pdf_objects(lines: list[str]) -> list[bytes]:
+def _pdf_objects(items: list[tuple[float, float, str]]) -> list[bytes]:
     content = []
-    y = 750
-    for line in lines:
+    for x, y, line in items:
         escaped = line.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
-        content.append(f"BT /F1 12 Tf 72 {y} Td ({escaped}) Tj ET")
-        y -= 20
+        content.append(f"BT /F1 12 Tf {x} {y} Td ({escaped}) Tj ET")
     stream = "\n".join(content).encode("latin-1")
 
     return [
@@ -23,9 +21,8 @@ def _pdf_objects(lines: list[str]) -> list[bytes]:
     ]
 
 
-def make_pdf(path: Path, lines: list[str]) -> None:
-    """Write a minimal valid single-page PDF containing the given text lines."""
-    objects = _pdf_objects(lines)
+def _write_pdf(path: Path, items: list[tuple[float, float, str]]) -> None:
+    objects = _pdf_objects(items)
     pdf = bytearray(b"%PDF-1.4\n")
     offsets = []
     for i, obj in enumerate(objects, start=1):
@@ -42,6 +39,21 @@ def make_pdf(path: Path, lines: list[str]) -> None:
     ).encode()
 
     Path(path).write_bytes(bytes(pdf))
+
+
+def make_pdf(path: Path, lines: list[str]) -> None:
+    """Write a minimal valid single-page, single-column PDF from text lines."""
+    items = [(72.0, 750.0 - i * 20, line) for i, line in enumerate(lines)]
+    _write_pdf(path, items)
+
+
+def make_pdf_two_column(
+    path: Path, left_lines: list[str], right_lines: list[str]
+) -> None:
+    """Write a minimal two-column PDF: left_lines and right_lines side by side."""
+    items = [(72.0, 750.0 - i * 20, line) for i, line in enumerate(left_lines)]
+    items += [(320.0, 750.0 - i * 20, line) for i, line in enumerate(right_lines)]
+    _write_pdf(path, items)
 
 
 def make_docx(path: Path, lines: list[str]) -> None:
