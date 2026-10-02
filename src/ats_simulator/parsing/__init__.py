@@ -1,0 +1,23 @@
+from pathlib import Path
+
+from .contact_fields import extract_contact_fields
+from .extract_text import extract_text
+from .models import ContactInfo, ParsedResume, ResumeSection
+from .sections import split_into_sections
+
+
+def parse_resume(path: Path) -> ParsedResume:
+    """Parse a CV file end-to-end: extract text, contacts and sections."""
+    text = extract_text(path)
+    contact = ContactInfo(**extract_contact_fields(text))
+    sections = split_into_sections(text)
+    return ParsedResume(
+        contact=contact,
+        sections=[
+            ResumeSection(name=name, content=content)
+            for name, content in sections.items()
+        ],
+    )
+
+
+__all__ = ["parse_resume", "ParsedResume", "ContactInfo", "ResumeSection"]
