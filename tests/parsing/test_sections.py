@@ -53,3 +53,35 @@ def test_split_into_sections_messy_formatting():
 def test_split_into_sections_no_headings_returns_empty():
     sections = split_into_sections("Just some random text with no headings.")
     assert sections == {}
+
+
+def test_is_heading_recognizes_extended_categories():
+    assert is_heading("Professional Summary") == "summary"
+    assert is_heading("Profilo professionale") == "summary"
+    assert is_heading("Languages") == "languages"
+    assert is_heading("Lingue") == "languages"
+    assert is_heading("Publications") == "publications"
+    assert is_heading("Volontariato") == "volunteer"
+    assert is_heading("Awards") == "awards"
+    assert is_heading("References") == "references"
+    assert is_heading("Hobbies") == "interests"
+
+
+def test_split_into_sections_keeps_extended_sections_separate():
+    text = (
+        "Summary\n"
+        "Backend engineer with 5 years of experience\n"
+        "\n"
+        "Experience\n"
+        "Senior Developer at Acme Corp\n"
+        "\n"
+        "Languages\n"
+        "English (fluent), Italian (native)\n"
+    )
+    sections = split_into_sections(text)
+    assert "Backend engineer with 5 years of experience" in sections["summary"]
+    assert "Senior Developer at Acme Corp" in sections["experience"]
+    assert "English (fluent), Italian (native)" in sections["languages"]
+    # Without the "Languages" heading recognized, this content would have
+    # leaked into the "experience" section instead of being isolated.
+    assert "English (fluent)" not in sections["experience"]
