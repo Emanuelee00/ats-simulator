@@ -1,0 +1,25 @@
+[project]
+name = "ats-simulator"
+version = "0.1.0"
+description = "Parser CV proprietario con validazione ATS-readability"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0",
+    "pdfplumber>=0.11",
+    "python-docx>=1.1",
+]
+
+[project.scripts]
+ats-simulator = "ats_simulator.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ats_simulator"]
