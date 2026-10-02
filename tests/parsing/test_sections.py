@@ -1,4 +1,20 @@
-from ats_simulator.parsing.sections import is_heading, split_into_sections
+from ats_simulator.parsing.sections import (
+    is_heading,
+    looks_like_heading_line,
+    split_into_sections,
+)
+
+
+def test_looks_like_heading_line_accepts_short_headings():
+    assert looks_like_heading_line("Istruzione e formazione") is True
+    assert looks_like_heading_line("Patente di guida") is True
+    assert looks_like_heading_line("Hobby e interessi") is True
+
+
+def test_looks_like_heading_line_rejects_prose():
+    long_sentence = "Developed skills in project management for a team of 5 engineers."
+    assert looks_like_heading_line(long_sentence) is False
+    assert looks_like_heading_line("") is False
 
 
 def test_is_heading_recognizes_known_headings():

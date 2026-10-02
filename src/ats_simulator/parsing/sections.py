@@ -1,3 +1,5 @@
+from .ai_backend import SectionClassifier
+
 _SECTION_HEADINGS: dict[str, set[str]] = {
     "summary": {
         "summary",
@@ -59,16 +61,40 @@ _SECTION_HEADINGS: dict[str, set[str]] = {
 }
 
 
-def is_heading(line: str) -> str | None:
-    """Return the canonical section name if the line is a known heading."""
+_MAX_HEADING_LENGTH = 40
+_MAX_HEADING_WORDS = 6
+
+
+def looks_like_heading_line(line: str) -> bool:
+    """Cheap shape check: is this line short enough to plausibly be a heading?
+
+    Filters out ordinary prose before any (costly, API-based) semantic
+    classification is attempted — a real heading is almost always a short
+    standalone line, not a full sentence ending in a period.
+    """
+    stripped = line.strip().rstrip(":")
+    if not stripped or stripped.endswith("."):
+        return False
+    return len(stripped) <= _MAX_HEADING_LENGTH and len(stripped.split()) <= _MAX_HEADING_WORDS
+
+
+def is_heading(line: str, classifier: SectionClassifier | None = None) -> str | None:
+    """Return the canonical section name if the line is a known heading.
+
+    Tries the exact-match set first (instant, zero risk, no network). Only
+    if that fails and a classifier is given does it fall back to semantic
+    classification — an enrichment, never a hard dependency.
+    """
     normalized = line.strip().lower().rstrip(":")
     for canonical, variants in _SECTION_HEADINGS.items():
         if normalized in variants:
             return canonical
+    if classifier is not None:
+        return classifier.classify(line)
     return None
 
 
-def split_into_sections(text: str) -> dict[str, str]:
+def split_into_sections(text: str, classifier: SectionClassifier | None = None) -> dict[str, str]:
     """Split resume text into sections keyed by canonical heading name.
 
     Lines before the first recognized heading (e.g. name, contact info)
@@ -78,7 +104,7 @@ def split_into_sections(text: str) -> dict[str, str]:
     sections: dict[str, list[str]] = {}
     current: str | None = None
     for line in text.splitlines():
-        heading = is_heading(line)
+        heading = is_heading(line, classifier)
         if heading:
             current = heading
             sections.setdefault(current, [])
