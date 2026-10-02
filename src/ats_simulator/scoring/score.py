@@ -3,6 +3,7 @@ from ats_simulator.parsing.models import ParsedResume
 from .models import ATSScoreResult
 
 _LAYOUT_PENALTY = 15
+_LOW_TEXT_SCORE_CAP = 5
 
 
 def score_from_parsed(parsed: ParsedResume) -> int:
@@ -32,9 +33,26 @@ def apply_layout_penalty(score: int, multi_column_layout: bool) -> int:
     return score
 
 
+def apply_low_text_penalty(score: int, low_text_content: bool) -> int:
+    """Cap the score when extracted text is too sparse to be a real CV.
+
+    This is the most severe real-world ATS failure mode: a scanned/image
+    CV is unreadable by almost any ATS, regardless of any other signal.
+    """
+    if low_text_content:
+        return min(score, _LOW_TEXT_SCORE_CAP)
+    return score
+
+
 def build_issues(parsed: ParsedResume) -> list[str]:
     """Human-readable list of problems found, for user-facing feedback."""
     issues = []
+    if parsed.low_text_content:
+        issues.append(
+            "Il CV sembra basato su immagine o scansione: il testo estraibile "
+            "è molto scarso. La maggior parte degli ATS reali non riesce a "
+            "leggerlo senza OCR ed è di fatto invisibile al sistema."
+        )
     if not parsed.contact.email:
         issues.append("Nessuna email trovata nel CV.")
     if not parsed.contact.phone:
@@ -59,5 +77,6 @@ def build_issues(parsed: ParsedResume) -> list[str]:
 def score_resume(parsed: ParsedResume) -> ATSScoreResult:
     """Compute the final ATS-readability score and issue list for a resume."""
     base = score_from_parsed(parsed)
-    final = apply_layout_penalty(base, parsed.multi_column_layout)
+    with_layout = apply_layout_penalty(base, parsed.multi_column_layout)
+    final = apply_low_text_penalty(with_layout, parsed.low_text_content)
     return ATSScoreResult(score=final, issues=build_issues(parsed))

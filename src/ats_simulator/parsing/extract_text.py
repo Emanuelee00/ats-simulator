@@ -36,3 +36,13 @@ def extract_text(path: Path) -> str:
     if suffix == ".docx":
         return extract_text_docx(path)
     raise ValueError(f"Unsupported file format: {suffix}")
+
+
+def is_text_sparse(text: str, min_words: int = 30) -> bool:
+    """Flag text too short to be a real CV — usually an image-based/scanned PDF.
+
+    Most real ATS parsers cannot read text from scanned or image-only
+    documents at all: this is the single most common cause of a CV being
+    completely invisible to an ATS, more severe than any formatting issue.
+    """
+    return len(text.split()) < min_words

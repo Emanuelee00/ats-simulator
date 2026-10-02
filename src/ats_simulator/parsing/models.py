@@ -18,3 +18,4 @@ class ParsedResume(BaseModel):
     sections: list[ResumeSection]
     skills: list[str] = []
     multi_column_layout: bool = False
+    low_text_content: bool = False

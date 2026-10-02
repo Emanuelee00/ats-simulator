@@ -4,6 +4,7 @@ from ats_simulator.parsing.extract_text import (
     extract_text,
     extract_text_docx,
     extract_text_pdf,
+    is_text_sparse,
 )
 from tests.fixtures import make_docx, make_pdf
 
@@ -39,3 +40,12 @@ def test_extract_text_unsupported_format(tmp_path):
     txt_path.write_text("hello")
     with pytest.raises(ValueError):
         extract_text(txt_path)
+
+
+def test_is_text_sparse_flags_near_empty_text():
+    assert is_text_sparse("Mario Rossi mario@email.com") is True
+
+
+def test_is_text_sparse_false_for_real_cv_length():
+    text = " ".join(["word"] * 40)
+    assert is_text_sparse(text) is False

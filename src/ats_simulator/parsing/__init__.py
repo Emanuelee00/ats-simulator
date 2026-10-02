@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from .contact_fields import extract_contact_fields
-from .extract_text import extract_text
+from .extract_text import extract_text, is_text_sparse
 from .layout import has_multi_column_layout
 from .models import ContactInfo, ParsedResume, ResumeSection
 from .sections import split_into_sections
@@ -22,6 +22,7 @@ def parse_resume(path: Path) -> ParsedResume:
         ],
         skills=skills,
         multi_column_layout=has_multi_column_layout(path),
+        low_text_content=is_text_sparse(text),
     )
 
 
