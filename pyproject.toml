@@ -9,6 +9,7 @@ dependencies = [
     "python-docx>=1.1",
     "phonenumbers>=8.13",
     "python-dateutil>=2.9",
+    "openai>=1.0",
 ]
 
 [project.scripts]
