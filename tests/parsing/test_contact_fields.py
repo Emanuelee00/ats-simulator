@@ -1,5 +1,3 @@
-import re
-
 from ats_simulator.parsing.contact_fields import (
     extract_contact_fields,
     extract_email,
@@ -8,24 +6,28 @@ from ats_simulator.parsing.contact_fields import (
 )
 
 
-def _digits(s: str) -> str:
-    return re.sub(r"\D", "", s)
-
-
 def test_extract_email_variants():
     assert extract_email("Contact: mario.rossi@email.com") == "mario.rossi@email.com"
     assert extract_email("reach me at m.rossi+jobs@sub.domain.co.uk") == "m.rossi+jobs@sub.domain.co.uk"
     assert extract_email("no email here") is None
 
 
-def test_extract_phone_variants():
-    # Scope: supports "+<country>" prefix or plain national format.
-    # The alternative "00<country>" international prefix is out of scope
-    # (rare on CVs, and ambiguous with a plain area-code match).
-    assert _digits(extract_phone("Tel: +39 333 1234567")) == "393331234567"
-    assert _digits(extract_phone("Mobile: +1 555 1234567")) == "15551234567"
-    assert _digits(extract_phone("Call 333-123-4567")) == "3331234567"
-    assert _digits(extract_phone("(555) 123-4567")) == "5551234567"
+def test_extract_phone_variants_normalized_to_e164():
+    assert extract_phone("Tel: +39 333 1234567") == "+393331234567"
+    assert extract_phone("Call 333-123-4567") == "+393331234567"
+    assert extract_phone("+1 212 9876543") == "+12129876543"
+    assert extract_phone("+44 20 7946 0958") == "+442079460958"
+
+
+def test_extract_phone_00_prefix_now_works():
+    # Previously a known, documented bug: the "00<country>" international
+    # prefix made a hand-written regex pick a wrong, truncated match.
+    # phonenumbers (libphonenumber) handles it correctly.
+    assert extract_phone("Phone: 0039 333 1234567") == "+393331234567"
+
+
+def test_extract_phone_no_match_returns_none():
+    assert extract_phone("no phone number in this text") is None
 
 
 def test_extract_links():
@@ -48,6 +50,6 @@ def test_extract_contact_fields_integration():
     )
     fields = extract_contact_fields(text)
     assert fields["email"] == "mario.rossi@email.com"
-    assert _digits(fields["phone"]) == "393331234567"
+    assert fields["phone"] == "+393331234567"
     assert fields["linkedin"] == "linkedin.com/in/mario-rossi"
     assert fields["github"] == "github.com/mariorossi"

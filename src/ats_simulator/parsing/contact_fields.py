@@ -1,9 +1,12 @@
 import re
 
+import phonenumbers
+
 _EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
-_PHONE_RE = re.compile(r"(?:\+\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}")
 _LINKEDIN_RE = re.compile(r"(?:https?://)?(?:www\.)?linkedin\.com/in/[\w-]+/?", re.IGNORECASE)
 _GITHUB_RE = re.compile(r"(?:https?://)?(?:www\.)?github\.com/[\w-]+/?", re.IGNORECASE)
+
+_DEFAULT_REGION = "IT"
 
 
 def extract_email(text: str) -> str | None:
@@ -12,10 +15,20 @@ def extract_email(text: str) -> str | None:
     return match.group(0) if match else None
 
 
-def extract_phone(text: str) -> str | None:
-    """Find the first phone-number-like sequence in the text, if any."""
-    match = _PHONE_RE.search(text)
-    return match.group(0) if match else None
+def extract_phone(text: str, region_hint: str = _DEFAULT_REGION) -> str | None:
+    """Find the first valid phone number in the text, normalized to E.164.
+
+    Uses Google's libphonenumber (via `phonenumbers`) instead of a hand-written
+    regex: it correctly validates and normalizes real-world international
+    formats (e.g. the "00<country>" prefix, which previously truncated
+    matches — see git history) that a regex kept getting subtly wrong.
+    `region_hint` is only used to interpret numbers with no explicit country
+    code; numbers with "+<country>" are parsed correctly regardless.
+    """
+    matches = phonenumbers.PhoneNumberMatcher(text, region_hint)
+    for match in matches:
+        return phonenumbers.format_number(match.number, phonenumbers.PhoneNumberFormat.E164)
+    return None
 
 
 def extract_links(text: str) -> dict:
