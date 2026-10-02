@@ -61,6 +61,13 @@ def detect_column_gaps(
     return [sum(c) / len(c) for c in clusters if len(c) >= threshold]
 
 
+def has_multi_column_layout(path: Path) -> bool:
+    """Check whether a PDF has a detected multi-column layout (DOCX: always False)."""
+    if Path(path).suffix.lower() != ".pdf":
+        return False
+    return bool(detect_column_gaps(extract_words_with_position(path)))
+
+
 def reorder_columns(words: list[Word], gaps: list[float]) -> str:
     """Reorder words into column-by-column reading order using detected gaps."""
     boundaries = sorted(gaps)

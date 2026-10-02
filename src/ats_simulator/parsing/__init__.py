@@ -2,6 +2,7 @@ from pathlib import Path
 
 from .contact_fields import extract_contact_fields
 from .extract_text import extract_text
+from .layout import has_multi_column_layout
 from .models import ContactInfo, ParsedResume, ResumeSection
 from .sections import split_into_sections
 from .skills_taxonomy import normalize_skills, split_raw_skills
@@ -20,6 +21,7 @@ def parse_resume(path: Path) -> ParsedResume:
             for name, content in sections.items()
         ],
         skills=skills,
+        multi_column_layout=has_multi_column_layout(path),
     )
 
 

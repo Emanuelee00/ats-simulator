@@ -17,3 +17,4 @@ class ParsedResume(BaseModel):
     contact: ContactInfo
     sections: list[ResumeSection]
     skills: list[str] = []
+    multi_column_layout: bool = False
