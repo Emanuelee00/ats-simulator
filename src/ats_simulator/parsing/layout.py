@@ -9,15 +9,24 @@ class Word(BaseModel):
     x0: float
     x1: float
     top: float
+    page_number: int
 
 
 def extract_words_with_position(path: Path) -> list[Word]:
     """Extract every word from a PDF with its bounding-box coordinates."""
     words = []
     with pdfplumber.open(path) as pdf:
-        for page in pdf.pages:
+        for page_number, page in enumerate(pdf.pages):
             for w in page.extract_words():
-                words.append(Word(text=w["text"], x0=w["x0"], x1=w["x1"], top=w["top"]))
+                words.append(
+                    Word(
+                        text=w["text"],
+                        x0=w["x0"],
+                        x1=w["x1"],
+                        top=w["top"],
+                        page_number=page_number,
+                    )
+                )
     return words
 
 
@@ -62,10 +71,20 @@ def detect_column_gaps(
 
 
 def has_multi_column_layout(path: Path) -> bool:
-    """Check whether a PDF has a detected multi-column layout (DOCX: always False)."""
+    """Check whether any page of a PDF has a detected multi-column layout.
+
+    Checked per page (not on words pooled across the whole document) so a
+    multi-page CV's pages can't interfere with each other's detection —
+    see the matching fix in extract_text_pdf (extract_text.py).
+    """
     if Path(path).suffix.lower() != ".pdf":
         return False
-    return bool(detect_column_gaps(extract_words_with_position(path)))
+    words = extract_words_with_position(path)
+    page_numbers = {w.page_number for w in words}
+    return any(
+        detect_column_gaps([w for w in words if w.page_number == page])
+        for page in page_numbers
+    )
 
 
 def reorder_columns(words: list[Word], gaps: list[float]) -> str:

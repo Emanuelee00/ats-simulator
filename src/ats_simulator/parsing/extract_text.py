@@ -7,19 +7,22 @@ from .layout import detect_column_gaps, extract_words_with_position, reorder_col
 
 
 def extract_text_pdf(path: Path) -> str:
-    """Extract raw text from a PDF, reordering multi-column layouts if detected.
+    """Extract raw text from a PDF, reordering multi-column layouts per page.
 
-    Column detection works on word coordinates across the whole document
-    without per-page boundaries — fine for the single-page CVs this targets,
-    not verified for multi-page layouts.
+    Column detection and reordering run independently per page — fixes a
+    previously documented bug where word coordinates were pooled across
+    the whole document, risking cross-page interference on multi-page CVs.
     """
     words = extract_words_with_position(path)
-    gaps = detect_column_gaps(words)
-    if gaps:
-        return reorder_columns(words, gaps)
     with pdfplumber.open(path) as pdf:
-        pages = [page.extract_text() or "" for page in pdf.pages]
-    return "\n".join(pages)
+        plain_pages = [page.extract_text() or "" for page in pdf.pages]
+
+    page_texts = []
+    for page_number, plain_text in enumerate(plain_pages):
+        page_words = [w for w in words if w.page_number == page_number]
+        gaps = detect_column_gaps(page_words)
+        page_texts.append(reorder_columns(page_words, gaps) if gaps else plain_text)
+    return "\n".join(page_texts)
 
 
 def extract_text_docx(path: Path) -> str:
