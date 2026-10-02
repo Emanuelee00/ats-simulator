@@ -4,19 +4,22 @@ from .contact_fields import extract_contact_fields
 from .extract_text import extract_text
 from .models import ContactInfo, ParsedResume, ResumeSection
 from .sections import split_into_sections
+from .skills_taxonomy import normalize_skills, split_raw_skills
 
 
 def parse_resume(path: Path) -> ParsedResume:
-    """Parse a CV file end-to-end: extract text, contacts and sections."""
+    """Parse a CV file end-to-end: extract text, contacts, sections and skills."""
     text = extract_text(path)
     contact = ContactInfo(**extract_contact_fields(text))
     sections = split_into_sections(text)
+    skills = normalize_skills(split_raw_skills(sections.get("skills", "")))
     return ParsedResume(
         contact=contact,
         sections=[
             ResumeSection(name=name, content=content)
             for name, content in sections.items()
         ],
+        skills=skills,
     )
 
 

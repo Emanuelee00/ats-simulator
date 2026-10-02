@@ -1,0 +1,65 @@
+canonical,synonyms
+Python,python;py
+JavaScript,javascript;js;ecmascript
+TypeScript,typescript;ts
+Machine Learning,ml;machine learning;apprendimento automatico
+Artificial Intelligence,ai;intelligenza artificiale
+Deep Learning,deep learning;dl
+SQL,sql;structured query language
+NoSQL,nosql
+Docker,docker;containerization
+Kubernetes,kubernetes;k8s
+Amazon Web Services,aws;amazon web services
+Microsoft Azure,azure;microsoft azure
+Google Cloud Platform,gcp;google cloud;google cloud platform
+React,react;reactjs;react.js
+Node.js,node;nodejs;node.js
+Java,java
+C++,c++;cpp
+C#,c#;csharp
+Git,git;version control
+CI/CD,ci/cd;continuous integration;continuous deployment
+REST API,rest;restful;rest api
+GraphQL,graphql
+HTML,html;html5
+CSS,css;css3
+Linux,linux;unix
+Project Management,project management;gestione progetti
+Agile,agile
+Scrum,scrum
+Data Analysis,data analysis;analisi dati
+Data Visualization,data visualization;visualizzazione dati
+Excel,excel;microsoft excel
+PowerPoint,powerpoint;microsoft powerpoint
+Communication,communication;comunicazione
+Leadership,leadership
+Teamwork,teamwork;lavoro di squadra
+Problem Solving,problem solving;problem-solving;risoluzione problemi
+Public Speaking,public speaking;parlare in pubblico
+Negotiation,negotiation;negoziazione
+Sales,sales;vendite
+Marketing,marketing
+Digital Marketing,digital marketing;marketing digitale
+SEO,seo;search engine optimization
+Content Writing,content writing;scrittura di contenuti
+Customer Service,customer service;assistenza clienti
+Financial Analysis,financial analysis;analisi finanziaria
+Accounting,accounting;contabilità
+Budgeting,budgeting
+Risk Management,risk management;gestione del rischio
+Supply Chain Management,supply chain;supply chain management
+Microsoft Office,microsoft office;office;ms office
+Django,django
+Flask,flask
+FastAPI,fastapi
+PostgreSQL,postgresql;postgres
+MySQL,mysql
+MongoDB,mongodb;mongo
+Redis,redis
+Terraform,terraform;iac;infrastructure as code
+Jenkins,jenkins
+English,english;inglese
+Italian,italian;italiano
+Spanish,spanish;spagnolo
+French,french;francese
+German,german;tedesco

@@ -16,3 +16,4 @@ class ResumeSection(BaseModel):
 class ParsedResume(BaseModel):
     contact: ContactInfo
     sections: list[ResumeSection]
+    skills: list[str] = []
