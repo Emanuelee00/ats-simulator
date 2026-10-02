@@ -26,3 +26,4 @@ class ParsedResume(BaseModel):
     employment_gaps: list[EmploymentGap] = []
     candidate_name: str | None = None
     experience_entries: list[ExperienceEntry] = []
+    education_level: str | None = None

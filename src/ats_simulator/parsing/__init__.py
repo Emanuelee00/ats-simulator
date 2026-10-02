@@ -2,6 +2,7 @@ from pathlib import Path
 
 from .candidate_name import extract_candidate_name
 from .contact_fields import extract_contact_fields
+from .education_taxonomy import normalize_education_level
 from .experience_analysis import compute_total_experience_years, detect_employment_gaps
 from .experience_dates import find_date_range_candidates, parse_date_range
 from .experience_entries import extract_experience_entries
@@ -42,6 +43,7 @@ def parse_resume(path: Path) -> ParsedResume:
         employment_gaps=gaps,
         candidate_name=extract_candidate_name(text),
         experience_entries=extract_experience_entries(sections.get("experience", "")),
+        education_level=normalize_education_level(sections.get("education", "")),
     )
 
 
