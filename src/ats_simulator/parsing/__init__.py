@@ -1,8 +1,10 @@
 from pathlib import Path
 
+from .candidate_name import extract_candidate_name
 from .contact_fields import extract_contact_fields
 from .experience_analysis import compute_total_experience_years, detect_employment_gaps
 from .experience_dates import find_date_range_candidates, parse_date_range
+from .experience_entries import extract_experience_entries
 from .extract_text import extract_text, is_text_sparse
 from .layout import has_multi_column_layout
 from .models import ContactInfo, ParsedResume, ResumeSection
@@ -38,6 +40,8 @@ def parse_resume(path: Path) -> ParsedResume:
         low_text_content=is_text_sparse(text),
         total_experience_years=total_years,
         employment_gaps=gaps,
+        candidate_name=extract_candidate_name(text),
+        experience_entries=extract_experience_entries(sections.get("experience", "")),
     )
 
 
