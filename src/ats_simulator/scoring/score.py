@@ -71,6 +71,12 @@ def build_issues(parsed: ParsedResume) -> list[str]:
             "Layout multi-colonna rilevato: alcuni ATS potrebbero leggere "
             "le sezioni in ordine sbagliato."
         )
+
+    for gap in parsed.employment_gaps:
+        issues.append(
+            f"Rilevato un periodo senza esperienza lavorativa tra {gap.start} "
+            f"e {gap.end}."
+        )
     return issues
 
 

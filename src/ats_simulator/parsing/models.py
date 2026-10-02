@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from .experience_analysis import EmploymentGap
+
 
 class ContactInfo(BaseModel):
     email: str | None = None
@@ -19,3 +21,5 @@ class ParsedResume(BaseModel):
     skills: list[str] = []
     multi_column_layout: bool = False
     low_text_content: bool = False
+    total_experience_years: float | None = None
+    employment_gaps: list[EmploymentGap] = []
