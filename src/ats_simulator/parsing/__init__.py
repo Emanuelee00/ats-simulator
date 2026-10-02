@@ -11,6 +11,7 @@ from .layout import has_multi_column_layout
 from .models import ContactInfo, ParsedResume, ResumeSection
 from .sections import split_into_sections
 from .skills_taxonomy import normalize_skills, split_raw_skills
+from .tables import has_pdf_tables
 
 
 def _extract_experience_dates(experience_text: str) -> list:
@@ -44,6 +45,7 @@ def parse_resume(path: Path) -> ParsedResume:
         candidate_name=extract_candidate_name(text),
         experience_entries=extract_experience_entries(sections.get("experience", "")),
         education_level=normalize_education_level(sections.get("education", "")),
+        has_tables=has_pdf_tables(path),
     )
 
 

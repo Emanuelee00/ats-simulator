@@ -1,9 +1,7 @@
 from ats_simulator.parsing.models import ParsedResume
 
 from .models import ATSScoreResult
-
-_LAYOUT_PENALTY = 15
-_LOW_TEXT_SCORE_CAP = 5
+from .penalties import apply_layout_penalty, apply_low_text_penalty, apply_table_penalty
 
 
 def score_from_parsed(parsed: ParsedResume) -> int:
@@ -23,24 +21,6 @@ def score_from_parsed(parsed: ParsedResume) -> int:
         score += 20
     if "skills" in section_names:
         score += 20
-    return score
-
-
-def apply_layout_penalty(score: int, multi_column_layout: bool) -> int:
-    """Penalize layouts that simpler ATS parsers are more likely to misread."""
-    if multi_column_layout:
-        return max(0, score - _LAYOUT_PENALTY)
-    return score
-
-
-def apply_low_text_penalty(score: int, low_text_content: bool) -> int:
-    """Cap the score when extracted text is too sparse to be a real CV.
-
-    This is the most severe real-world ATS failure mode: a scanned/image
-    CV is unreadable by almost any ATS, regardless of any other signal.
-    """
-    if low_text_content:
-        return min(score, _LOW_TEXT_SCORE_CAP)
     return score
 
 
@@ -71,6 +51,11 @@ def build_issues(parsed: ParsedResume) -> list[str]:
             "Layout multi-colonna rilevato: alcuni ATS potrebbero leggere "
             "le sezioni in ordine sbagliato."
         )
+    if parsed.has_tables:
+        issues.append(
+            "Tabella rilevata nel PDF: molti ATS non riescono a leggere "
+            "correttamente il contenuto delle tabelle."
+        )
 
     for gap in parsed.employment_gaps:
         issues.append(
@@ -82,7 +67,8 @@ def build_issues(parsed: ParsedResume) -> list[str]:
 
 def score_resume(parsed: ParsedResume) -> ATSScoreResult:
     """Compute the final ATS-readability score and issue list for a resume."""
-    base = score_from_parsed(parsed)
-    with_layout = apply_layout_penalty(base, parsed.multi_column_layout)
-    final = apply_low_text_penalty(with_layout, parsed.low_text_content)
-    return ATSScoreResult(score=final, issues=build_issues(parsed))
+    score = score_from_parsed(parsed)
+    score = apply_layout_penalty(score, parsed.multi_column_layout)
+    score = apply_table_penalty(score, parsed.has_tables)
+    score = apply_low_text_penalty(score, parsed.low_text_content)
+    return ATSScoreResult(score=score, issues=build_issues(parsed))

@@ -1,14 +1,10 @@
 from ats_simulator.parsing.models import ContactInfo, ParsedResume, ResumeSection
-from ats_simulator.scoring.score import (
-    apply_layout_penalty,
-    apply_low_text_penalty,
-    build_issues,
-    score_from_parsed,
-    score_resume,
-)
+from ats_simulator.scoring.score import build_issues, score_from_parsed, score_resume
 
 
-def _full_resume(multi_column: bool = False, low_text: bool = False) -> ParsedResume:
+def _full_resume(
+    multi_column: bool = False, low_text: bool = False, has_tables: bool = False
+) -> ParsedResume:
     return ParsedResume(
         contact=ContactInfo(
             email="a@b.com", phone="123", linkedin="li.com/in/a", github="gh.com/a"
@@ -21,6 +17,7 @@ def _full_resume(multi_column: bool = False, low_text: bool = False) -> ParsedRe
         skills=["Python"],
         multi_column_layout=multi_column,
         low_text_content=low_text,
+        has_tables=has_tables,
     )
 
 
@@ -34,15 +31,6 @@ def test_score_from_parsed_full_resume_scores_100():
 
 def test_score_from_parsed_empty_resume_scores_0():
     assert score_from_parsed(_empty_resume()) == 0
-
-
-def test_apply_layout_penalty_reduces_score_when_multicolumn():
-    assert apply_layout_penalty(100, multi_column_layout=True) == 85
-    assert apply_layout_penalty(100, multi_column_layout=False) == 100
-
-
-def test_apply_layout_penalty_floors_at_zero():
-    assert apply_layout_penalty(10, multi_column_layout=True) == 0
 
 
 def test_build_issues_flags_missing_fields():
@@ -65,15 +53,15 @@ def test_score_resume_clean_vs_problematic_resume():
     assert any("colonna" in issue.lower() for issue in problematic.issues)
 
 
-def test_apply_low_text_penalty_caps_score():
-    assert apply_low_text_penalty(100, low_text_content=True) == 5
-    assert apply_low_text_penalty(100, low_text_content=False) == 100
-    assert apply_low_text_penalty(2, low_text_content=True) == 2
-
-
 def test_score_resume_low_text_content_overrides_everything():
     # Even a resume that looks otherwise "complete" gets capped: if the
     # text is this sparse, real ATS engines won't read it either.
     scanned = score_resume(_full_resume(low_text=True))
     assert scanned.score <= 5
     assert any("scansione" in issue.lower() for issue in scanned.issues)
+
+
+def test_score_resume_table_detected():
+    result = score_resume(_full_resume(has_tables=True))
+    assert result.score == 80
+    assert any("tabella" in issue.lower() for issue in result.issues)

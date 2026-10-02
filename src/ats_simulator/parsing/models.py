@@ -27,3 +27,4 @@ class ParsedResume(BaseModel):
     candidate_name: str | None = None
     experience_entries: list[ExperienceEntry] = []
     education_level: str | None = None
+    has_tables: bool = False
